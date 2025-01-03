@@ -1,35 +1,42 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors'); // Import cors
+const express = require("express");
+const axios = require("axios"); // Axios library for making HTTP requests
+const cors = require("cors");
+
 const app = express();
-const PORT = 8080;
+const port = 3000; // Hardcoded port 3000
 
 // Enable CORS
 app.use(cors());
 
-// Array to hold chat messages
-let messages = [];
+// Middleware to parse JSON data
+app.use(express.json()); // Use express.json() for JSON body parsing
 
-// Middleware
-app.use(bodyParser.json());
+// Handle POST requests to /submit route
+app.post("/submit", async (req, res) => {
+  const { name, email, age } = req.body;
 
-// Endpoint to fetch messages
-app.get('/getMessages', (req, res) => {
-  res.json({ messages });
-});
+  if (!name || !email || !age) {
+    return res.status(400).send("Missing required fields: name, email, age");
+  }
 
-// Endpoint to send new message
-app.post('/sendMessage', (req, res) => {
-  const { text, userId } = req.body;
-  if (text && userId) {
-    messages.push({ text, userId }); // Store the message with userId
-    res.status(200).send("Message received");
-  } else {
-    res.status(400).send("Invalid message");
+  try {
+    // Sending data to the external API via GET request
+    const response = await axios.get('https://realtime-gray.vercel.app/x_submit', {
+      params: {
+        name,
+        email,
+        age
+      }
+    });
+
+    // Respond back to the client with the result
+    res.send("Data transferred successfully.");
+  } catch (error) {
+    res.status(500).send("Error sending data to external API.");
   }
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
